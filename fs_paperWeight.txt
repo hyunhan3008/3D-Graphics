@@ -1,0 +1,78 @@
+//For paper Weight Texture
+#version 330 core
+
+in vec3 aPos;
+in vec3 aNormal;
+in vec2 aTexCoord;
+
+out vec4 fragColor;
+ 
+uniform vec3 viewPos;
+uniform sampler2D first_texture;
+uniform sampler2D second_texture;
+
+struct Light {
+  vec3 position;
+  vec3 ambient;
+  vec3 diffuse;
+  vec3 specular;
+};
+
+uniform Light light;
+
+struct Light2 {
+  vec3 position2;
+  vec3 spotDir;
+  vec3 ambient2;
+  vec3 diffuse2;
+  vec3 specular2;
+  float cutOff;
+  float outercutOff;
+};
+
+uniform Light2 light2;  
+
+struct Light3 {
+  vec3 position3;
+  vec3 ambient3;
+  vec3 diffuse3;
+  vec3 specular3;
+};
+
+uniform Light3 secondLight; 
+
+struct Material {
+  vec3 ambient;
+  vec3 diffuse;
+  vec3 specular;
+  float shininess;
+}; 
+  
+uniform Material material;
+
+
+void main() {
+  vec3 ambient, diffuse, specular;
+  vec3 lightDir2 = normalize(light2.position2 - aPos); 
+  float theta = dot(normalize(light2.spotDir), -lightDir2);
+  float epsilon = light2.cutOff - light2.outercutOff;
+  float intensity = clamp((theta - light2.outercutOff) / epsilon, 0.0, 1.0);  
+
+  // ambient
+  ambient = (light.ambient+(-light2.ambient2*5)*intensity+secondLight.ambient3) * vec3(texture(first_texture, aTexCoord));
+
+  // diffuse
+  vec3 norm = normalize(aNormal);
+  vec3 lightDir = normalize(light.position - aPos);  
+  float diff = max(dot(norm, lightDir), 0.0);
+  diffuse =  (light.diffuse+(-light2.diffuse2)*intensity+secondLight.diffuse3) * diff * vec3(texture(first_texture, aTexCoord)); 
+  
+  // specular 
+  vec3 viewDir = normalize(viewPos - aPos);
+  vec3 reflectDir = reflect(-lightDir, norm);
+  float spec = pow(max(dot(viewDir, reflectDir), 0.0), material.shininess);
+  specular = (light.specular+light2.specular2*intensity+secondLight.specular3) * spec * vec3(texture(second_texture, aTexCoord));
+
+  vec3 result = ambient + diffuse + specular;
+  fragColor = vec4(result, 1.0);
+}

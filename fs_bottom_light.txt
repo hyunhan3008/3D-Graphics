@@ -1,0 +1,11 @@
+//For second light
+#version 330 core
+
+out vec4 fragColor;
+
+uniform vec3 colorValue;
+
+void main() {
+
+  fragColor = vec4(colorValue, 1.0);
+}
